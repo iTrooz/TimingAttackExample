@@ -58,45 +58,51 @@ def guess_length():
     print(f"Assumed length: {assumed_length}")
     return assumed_length
 
+def letter_times(guessed_mdp, letter_n, assumed_length, repeat, repeat_threads):
+    print(f"\nGuessing letter {letter_n}..")
+    times = []
+    
+    for letter in characters():
+        
+        guess = guessed_mdp+letter + "a"*(assumed_length-letter_n)
+
+        thread_results = [None]*repeat_threads
+
+        def thread_fun(thread_results, index):
+            start = time()
+            for i in range(repeat):
+                check_password(guess)
+            end = time()
+            thread_results[index] = end-start
+
+        threads = []
+        for i in range(repeat_threads-1):
+            thr = threading.Thread(target=thread_fun, args=(thread_results, i))
+            thr.start()
+            threads.append(thr)
+        
+        thread_fun(thread_results, -1)
+        for thr in threads:
+            thr.join()
+
+        times.append(TimedData(time=sum(thread_results), data=letter))
+
+    return times
+
+
+
 def guess_letters(assumed_length, repeat=1, repeat_threads=1):
     letter_n = 1
     guessed_mdp = ""
     for letter_n in range(1, assumed_length+1):
-        print(f"\nGuessing letter {letter_n}..")
-        times = []
 
-
-        for letter in characters():
-            
-            guess = guessed_mdp+letter + "a"*(assumed_length-letter_n)
-
-            thread_results = [None]*repeat_threads
-
-            def thread_fun(thread_results, index):
-                start = time()
-                for i in range(repeat):
-                    check_password(guess)
-                end = time()
-                thread_results[index] = end-start
-
-            threads = []
-            for i in range(repeat_threads-1):
-                thr = threading.Thread(target=thread_fun, args=(thread_results, i))
-                thr.start()
-                threads.append(thr)
-            
-            thread_fun(thread_results, -1)
-            for thr in threads:
-                thr.join()
-
-            times.append(TimedData(time=sum(thread_results), data=letter))
+        times = letter_times(guessed_mdp, letter_n, assumed_length, repeat, repeat_threads)
 
         sorted_times = sorted(times, reverse=True)
         guessed_letter = sorted_times[0].data
         
         print(f"Guessed letter: {guessed_letter}")
         guessed_mdp+=guessed_letter
-
         letter_n += 1
 
     print(f"\n\nGUESSED LETTERS: {guessed_mdp}")
