@@ -1,5 +1,6 @@
 from time import time, sleep
 import string
+import threading
 
 # MDP, INVISIBLE
 PASSWORD = "bbb"
@@ -57,7 +58,7 @@ def guess_length():
     print(f"Assumed length: {assumed_length}")
     return assumed_length
 
-def guess_letters(assumed_length, repeat=1):
+def guess_letters(assumed_length, repeat=1, repeat_threads=1):
     letter_n = 1
     guessed_mdp = ""
     for letter_n in range(1, assumed_length+1):
@@ -69,13 +70,26 @@ def guess_letters(assumed_length, repeat=1):
             
             guess = guessed_mdp+letter + "a"*(assumed_length-letter_n)
 
-            total_time = 0
-            start = time()
-            for i in range(repeat):
-                check_password(guess)
-            end = time()
-            total_time += end-start
-            times.append(TimedData(time=total_time, data=letter))
+            thread_results = [None]*repeat_threads
+
+            def thread_fun(thread_results, index):
+                start = time()
+                for i in range(repeat):
+                    check_password(guess)
+                end = time()
+                thread_results[index] = end-start
+
+            threads = []
+            for i in range(repeat_threads-1):
+                thr = threading.Thread(target=thread_fun, args=(thread_results, i))
+                thr.start()
+                threads.append(thr)
+            
+            thread_fun(thread_results, -1)
+            for thr in threads:
+                thr.join()
+
+            times.append(TimedData(time=sum(thread_results), data=letter))
 
         sorted_times = sorted(times, reverse=True)
         guessed_letter = sorted_times[0].data
@@ -85,19 +99,19 @@ def guess_letters(assumed_length, repeat=1):
 
         letter_n += 1
 
-    print(f"\n\nGUESSED PASSWORD: {guessed_mdp}")
+    print(f"\n\nGUESSED LETTERS: {guessed_mdp}")
     return guessed_mdp
 
 # guessed_length = guess_length()
 guessed_length = 3
 
 A = []
-for i in range(10):
+for i in range(5):
     A.append(guess_letters(guessed_length))
 
 B = []
-for i in range(10):
-    B.append(guess_letters(guessed_length, repeat=100_000))
+for i in range(5):
+    B.append(guess_letters(guessed_length, repeat=100_000, repeat_threads=1))
 
 
 def b_count(LL):
