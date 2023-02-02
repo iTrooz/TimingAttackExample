@@ -1,6 +1,7 @@
 from time import time, sleep
 import string
 import threading
+from thread_with_return_value import ThreadWithReturnValue
 
 # MDP, INVISIBLE
 PASSWORD = "bbb"
@@ -58,34 +59,21 @@ def guess_length():
     print(f"Assumed length: {assumed_length}")
     return assumed_length
 
-def letter_times(guessed_mdp, letter_n, assumed_length, repeat, repeat_threads):
-    print(f"\nGuessing letter {letter_n}..")
+def letter_times(guessed_mdp, letter_n, assumed_length, repeat):
+    print("Letter times")
+    # print(f"\nGuessing letter {letter_n}..")
     times = []
     
     for letter in characters():
         
         guess = guessed_mdp+letter + "a"*(assumed_length-letter_n)
 
-        thread_results = [None]*repeat_threads
+        start = time()
+        for i in range(repeat):
+            check_password(guess)
+        end = time()
 
-        def thread_fun(thread_results, index):
-            start = time()
-            for i in range(repeat):
-                check_password(guess)
-            end = time()
-            thread_results[index] = end-start
-
-        threads = []
-        for i in range(repeat_threads-1):
-            thr = threading.Thread(target=thread_fun, args=(thread_results, i))
-            thr.start()
-            threads.append(thr)
-        
-        thread_fun(thread_results, -1)
-        for thr in threads:
-            thr.join()
-
-        times.append(TimedData(time=sum(thread_results), data=letter))
+        times.append(TimedData(time=(end-start), data=letter))
 
     return times
 
@@ -94,36 +82,41 @@ def letter_times(guessed_mdp, letter_n, assumed_length, repeat, repeat_threads):
 def guess_letters(assumed_length, repeat=1, repeat_threads=1):
     letter_n = 1
     guessed_mdp = ""
+    print("a")
     for letter_n in range(1, assumed_length+1):
+        print(letter_n)
 
-        times = letter_times(guessed_mdp, letter_n, assumed_length, repeat, repeat_threads)
+        threads = []
 
-        sorted_times = sorted(times, reverse=True)
+        for i in range(repeat_threads-1):
+            thr = ThreadWithReturnValue(target=letter_times, args=(guessed_mdp, letter_n, assumed_length, repeat))
+            thr.daemon = True
+            thr.start()
+            threads.append(thr)
+
+        all_results = letter_times(guessed_mdp, letter_n, assumed_length, repeat)
+
+        for thr in threads:
+            his_result = thr.join()
+            for i in range(len(his_result)):
+                all_results[i].time += his_result[i].time
+
+
+        sorted_times = sorted(all_results, reverse=True)
+        print("b")
         guessed_letter = sorted_times[0].data
         
-        print(f"Guessed letter: {guessed_letter}")
+        # print(f"Guessed letter: {guessed_letter}")
         guessed_mdp+=guessed_letter
         letter_n += 1
 
-    print(f"\n\nGUESSED LETTERS: {guessed_mdp}")
+    # print(f"\n\nGUESSED LETTERS: {guessed_mdp}")
     return guessed_mdp
 
-# guessed_length = guess_length()
-guessed_length = 3
-
-A = []
-for i in range(5):
-    A.append(guess_letters(guessed_length))
-
-B = []
-for i in range(5):
-    B.append(guess_letters(guessed_length, repeat=100_000, repeat_threads=1))
-
-
-def b_count(LL):
+def letter_count(pass_list, letter='b'):
     wrong = 0
     right = 0
-    for L in LL:
+    for L in pass_list:
         for i in L:
             if i == 'b':
                 right+=1
@@ -131,11 +124,28 @@ def b_count(LL):
                 wrong+=1
     return {"B":right, "Not_B":wrong}
 
+# guessed_length = guess_length()
+guessed_length = 1
+
+
+# pass_list_A = []
+# for i in range(5):
+#     pass_list_A.append(guess_letters(guessed_length, repeat=100, repeat_threads=1))
+
+
+pass_list_B = []
+REPEAT = 200000
+THREADS = 2
+for i in range(1):
+    pass_list_B.append(guess_letters(guessed_length, REPEAT, repeat_threads=THREADS))
+
+
+exit(1)
 
 print("without repeat:")
-print(A)
-print("B counts:", b_count(A))
+print(pass_list_A)
+print("B counts:", letter_count(pass_list_A))
 
-print("with repeat:")
-print(B)
-print("B counts:", b_count(B))
+print(f"with repeat: (repeat={REPEAT} threads={THREADS})")
+print(pass_list_B)
+print("B counts:", letter_count(pass_list_B))
