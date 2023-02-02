@@ -124,6 +124,7 @@ guessed_length = 3
 
 pass_list_A = []
 for i in range(5):
+    print("A iteration ", i)
     pass_list_A.append(guess_letters(guessed_length, repeat_threads=1))
 
 
@@ -131,6 +132,7 @@ pass_list_B = []
 REPEAT = 10
 THREADS = 12
 for i in range(5):
+    print("B iteration ", i)
     pass_list_B.append(guess_letters(guessed_length, REPEAT, repeat_threads=THREADS))
 
 print("without repeat:")
