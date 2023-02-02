@@ -1,6 +1,6 @@
 from time import time, sleep
 import string
-import threading
+from concurrent.futures import ProcessPoolExecutor
 from thread_with_return_value import ThreadWithReturnValue
 
 # MDP, INVISIBLE
@@ -86,18 +86,17 @@ def guess_letters(assumed_length, repeat=1, repeat_threads=1):
     for letter_n in range(1, assumed_length+1):
         print(letter_n)
 
-        threads = []
+        tasks = []
 
+        executor = ProcessPoolExecutor()
         for i in range(repeat_threads-1):
-            thr = ThreadWithReturnValue(target=letter_times, args=(guessed_mdp, letter_n, assumed_length, repeat))
-            thr.daemon = True
-            thr.start()
-            threads.append(thr)
+            future = executor.submit(letter_times, guessed_mdp, letter_n, assumed_length, repeat)
+            tasks.append(future)
 
         all_results = letter_times(guessed_mdp, letter_n, assumed_length, repeat)
 
-        for thr in threads:
-            his_result = thr.join()
+        for thr in tasks:
+            his_result = thr.result()
             for i in range(len(his_result)):
                 all_results[i].time += his_result[i].time
 
