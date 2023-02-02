@@ -5,7 +5,7 @@ from thread_with_return_value import ThreadWithReturnValue
 
 # MDP, INVISIBLE
 PASSWORD = "bbb"
-# TIMING = 0.000_000_000_1
+TIMING = 0.000_01
 # TIMING = 0
 
 def characters():
@@ -20,12 +20,12 @@ def characters():
 def check_password(candidate):
     if len(PASSWORD) != len(candidate):
         return False
-    # sleep(TIMING)
+    sleep(TIMING)
 
     for i in range(len(PASSWORD)):
         if PASSWORD[i] != candidate[i]:
             return False
-        # sleep(TIMING)
+        sleep(TIMING)
     return True
 
 # MON CODE
@@ -53,14 +53,12 @@ def guess_length():
         end = time()
         times.append(TimedData(time=end-start, data=i))
 
-    print(times)
     sorted_times = sorted(times, reverse=True)
     assumed_length = sorted_times[0].data
     print(f"Assumed length: {assumed_length}")
     return assumed_length
 
 def letter_times(guessed_mdp, letter_n, assumed_length, repeat):
-    print("Letter times")
     # print(f"\nGuessing letter {letter_n}..")
     times = []
     
@@ -82,10 +80,8 @@ def letter_times(guessed_mdp, letter_n, assumed_length, repeat):
 def guess_letters(assumed_length, repeat=1, repeat_threads=1):
     letter_n = 1
     guessed_mdp = ""
-    print("a")
     for letter_n in range(1, assumed_length+1):
-        print(letter_n)
-
+    
         tasks = []
 
         executor = ProcessPoolExecutor()
@@ -102,7 +98,6 @@ def guess_letters(assumed_length, repeat=1, repeat_threads=1):
 
 
         sorted_times = sorted(all_results, reverse=True)
-        print("b")
         guessed_letter = sorted_times[0].data
         
         # print(f"Guessed letter: {guessed_letter}")
@@ -124,22 +119,19 @@ def letter_count(pass_list, letter='b'):
     return {"B":right, "Not_B":wrong}
 
 # guessed_length = guess_length()
-guessed_length = 1
+guessed_length = 3
 
 
-# pass_list_A = []
-# for i in range(5):
-#     pass_list_A.append(guess_letters(guessed_length, repeat=100, repeat_threads=1))
+pass_list_A = []
+for i in range(5):
+    pass_list_A.append(guess_letters(guessed_length, repeat_threads=1))
 
 
 pass_list_B = []
-REPEAT = 200000
-THREADS = 2
-for i in range(1):
+REPEAT = 10
+THREADS = 12
+for i in range(5):
     pass_list_B.append(guess_letters(guessed_length, REPEAT, repeat_threads=THREADS))
-
-
-exit(1)
 
 print("without repeat:")
 print(pass_list_A)
