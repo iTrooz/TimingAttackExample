@@ -5,7 +5,7 @@ from thread_with_return_value import ThreadWithReturnValue
 
 # MDP, INVISIBLE
 PASSWORD = "bbb"
-TIMING = 0.000_01
+# TIMING = 0.000_000_000_1
 # TIMING = 0
 
 def characters():
@@ -20,12 +20,10 @@ def characters():
 def check_password(candidate):
     if len(PASSWORD) != len(candidate):
         return False
-    sleep(TIMING)
 
     for i in range(len(PASSWORD)):
         if PASSWORD[i] != candidate[i]:
             return False
-        sleep(TIMING)
     return True
 
 # MON CODE
@@ -129,7 +127,7 @@ for i in range(5):
 
 
 pass_list_B = []
-REPEAT = 10
+REPEAT = 500_000
 THREADS = 12
 for i in range(5):
     print("B iteration ", i)
